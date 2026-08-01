@@ -2,10 +2,6 @@
 Modul alerting sederhana untuk semua DAG.
 Dipanggil lewat on_failure_callback -- otomatis jalan setiap kali
 ada task yang gagal (setelah retry habis).
-
-Default: nulis alert jelas ke Airflow log (selalu bisa dicek dari UI).
-Opsional: kirim ke Slack/Discord webhook kalau AIRFLOW_VAR_ALERT_WEBHOOK_URL
-di-set sebagai Airflow Variable (kalau tidak di-set, bagian ini di-skip).
 """
 
 import logging
@@ -28,12 +24,8 @@ def task_failure_alert(context):
         f"Tanggal   : {execution_date}\n"
         f"Error     : {exception}"
     )
-
-    # Selalu muncul di Airflow log (Admin -> bisa dicek lewat log task manapun
-    # atau lewat 'docker compose logs airflow-scheduler')
     logger.error(message)
 
-    # Opsional: kirim ke webhook kalau ada yang di-set
     try:
         webhook_url = Variable.get("ALERT_WEBHOOK_URL", default_var=None)
     except Exception:
