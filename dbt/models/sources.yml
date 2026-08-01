@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    tables:
+      - name: coingecko_market_raw
+        description: "Raw snapshot harian dari CoinGecko API, di-load apa adanya dari MinIO"
+        columns:
+          - name: id
+            description: "CoinGecko coin id"
+          - name: ingestion_date
+            description: "Tanggal partisi ingestion"

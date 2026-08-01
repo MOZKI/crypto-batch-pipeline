@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: gold_daily_price_summary
+    description: "Snapshot harian per coin untuk dashboard"
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: price_usd
+        tests:
+          - not_null
+
+  - name: gold_moving_average_7d
+    description: "Moving average harga 7 hari per coin"
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: ma_7d
+        tests:
+          - not_null
+
+  - name: gold_volatility_metric
+    description: "Volatilitas harga 30 hari per coin (stddev)"
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+
+  - name: gold_top_gainers_losers
+    description: "Ranking top gainers/losers harian di antara 15 coin"
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: gainer_rank
+        tests:
+          - not_null

@@ -1,0 +1,12 @@
+crypto_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: postgres-dwh
+      user: "{{ env_var('DWH_DB_USER') }}"
+      password: "{{ env_var('DWH_DB_PASSWORD') }}"
+      port: 5432
+      dbname: "{{ env_var('DWH_DB_NAME') }}"
+      schema: public
+      threads: 4

@@ -1,0 +1,23 @@
+name: "crypto_pipeline"
+version: "1.0.0"
+config-version: 2
+
+profile: "crypto_pipeline"
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  crypto_pipeline:
+    silver:
+      +materialized: view
+      +schema: silver
+    gold:
+      +materialized: table
+      +schema: gold
