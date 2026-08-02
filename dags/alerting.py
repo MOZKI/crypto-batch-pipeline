@@ -1,6 +1,7 @@
 """
-Modul alerting sederhana untuk semua DAG.
-Dipanggil lewat on_failure_callback -- otomatis jalan setiap kali
+> Alerting for DAG <
+Notes:
+Dipanggil lewat on_failure_callback otomatis jalan setiap kali 
 ada task yang gagal (setelah retry habis).
 """
 
