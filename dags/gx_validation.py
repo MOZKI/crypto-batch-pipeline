@@ -1,8 +1,8 @@
 """
-Modul validasi Great Expectations (GX Core, ephemeral context)
-untuk raw data snapshot CoinGecko sebelum di-load ke Bronze layer.
-
-Dipakai oleh DAG dag_validate_load_bronze.py.
+> GX Validation Raw Data <
+Notes:
+Validasi raw snapshot dari CoinGecko (hasil extract snapshot.json) 
+menggunakan Great Expectations. Digunakan oleh DAG daily_pipeline.
 """
 
 import great_expectations as gx

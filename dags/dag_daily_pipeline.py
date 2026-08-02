@@ -1,10 +1,8 @@
 """
-DAG harian gabungan: extract snapshot dari CoinGecko, land ke MinIO,
+> DAG Daily Pipeline <
+Notes:
+DAG ini dijalankan harian dan mencakup beberapa task: extract snapshot dari CoinGecko, land ke MinIO,
 validasi dengan Great Expectations, lalu load ke Postgres Bronze.
-
-Menggantikan dag_daily_extract_land.py dan dag_validate_load_bronze.py
-yang sebelumnya terpisah -- digabung supaya tidak ada race condition
-soal logical date (extract dan load sekarang selalu 1 run yang sama).
 """
 
 import json
@@ -59,10 +57,8 @@ ON CONFLICT (id, ingestion_date) DO UPDATE SET
     extracted_at = EXCLUDED.extracted_at;
 """
 
-
 def _get_api_key() -> str:
     return Variable.get("COINGECKO_API_KEY")
-
 
 def extract_and_land(**context):
     api_key = _get_api_key()
@@ -97,11 +93,8 @@ def extract_and_land(**context):
     )
     print(f"Snapshot tersimpan di s3://{MINIO_BUCKET}/{object_key}")
 
-    # langsung diteruskan ke task berikutnya lewat XCom,
-    # gak perlu fetch ulang dari MinIO karena masih di run yang sama
     context["ti"].xcom_push(key="records", value=data)
     context["ti"].xcom_push(key="extracted_at", value=extracted_at)
-
 
 def validate_raw(**context):
     records = context["ti"].xcom_pull(key="records", task_ids="extract_and_land")
@@ -109,7 +102,6 @@ def validate_raw(**context):
         validate_raw_snapshot(records)
     except RawDataValidationError as e:
         raise AirflowException(f"Validasi GX gagal, load ke Bronze dibatalkan: {e}")
-
 
 def load_to_bronze(**context):
     records = context["ti"].xcom_pull(key="records", task_ids="extract_and_land")
@@ -151,7 +143,6 @@ def load_to_bronze(**context):
     cursor.close()
     conn.close()
     print(f"Berhasil load {len(records)} baris ke bronze.coingecko_market_raw")
-
 
 with DAG(
     dag_id="dag_daily_pipeline",

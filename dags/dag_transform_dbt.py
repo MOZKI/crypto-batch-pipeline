@@ -1,8 +1,9 @@
 """
-DAG harian: jalankan dbt run lalu dbt test setelah data masuk ke Bronze,
-lalu validasi Gold layer dengan Great Expectations.
-
-Fase 6: dilengkapi retry logic dan alerting sederhana lewat default_args.
+> DAG Transform DBT <
+Notes:
+DAG untuk mentransform data dari Bronze -> Silver -> Gold menggunakan dbt, 
+lalu dbt test, dan validasi Gold layer dengan Great Expectations. Dijalankan harian
+jika Bronze layer sudah terisi (task load_to_bronze di dag_daily_pipeline selesai).
 """
 
 from datetime import datetime, timedelta

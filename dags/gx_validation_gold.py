@@ -1,7 +1,8 @@
 """
- > Gold Layer validation with Great Expectations < 
+> GX Validation Gold Layer <
 Notes:
 Membaca skema public.gold dari Postgres (DWH), lalu validasi dengan Great Expectations.
+Digunakan oleh DAG dag_transform_dbt.py setelah dbt run dan dbt test selesai.
 """
 
 import great_expectations as gx

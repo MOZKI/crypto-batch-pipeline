@@ -1,12 +1,13 @@
 """
-DAG one-time untuk backfill data historis ~30 hari per coin,
-menggunakan endpoint /coins/{id}/market_chart.
+> DAG Backfill Historical Data < 
+Notes:
+Backfill data historis ~30 hari per coin ke MinIO, 
+menggunakan endpoint /coins/{id}/market_chart. 
+Dengan tujuan supaya metric moving average 7 hari dan volatility 30 hari
+punya data historis representatif sejak awal pipeline berjalan.
 
-Dibutuhkan supaya metric moving average 7 hari dan volatility 30 hari
-punya data historis representatif sejak awal pipeline berjalan,
-bukan menunggu daily DAG numpuk data 30 hari ke depan.
-
-Cara run: trigger MANUAL sekali dari Airflow UI, cukup 1x saja.
+How to use: 
+trigger MANUAL sekali dari Airflow UI, cukup 1x saja.
 Jangan schedule DAG ini.
 """
 
@@ -31,8 +32,6 @@ from config import (
 
 
 def _get_api_key() -> str:
-    # API key disimpan sebagai Airflow Variable, BUKAN hardcode di kode
-    # Admin -> Variables -> key: COINGECKO_API_KEY
     return Variable.get("COINGECKO_API_KEY")
 
 
@@ -56,7 +55,7 @@ def backfill_coin(coin_id: str, **context):
         "raw_data": data,
     }
 
-    ingestion_date = context["ds"]  # tanggal DAG run, format YYYY-MM-DD
+    ingestion_date = context["ds"]  
     object_key = f"{BACKFILL_PREFIX}/dt={ingestion_date}/{coin_id}.json"
 
     s3_hook = S3Hook(aws_conn_id=MINIO_CONN_ID)
@@ -73,7 +72,7 @@ with DAG(
     dag_id="dag_backfill_historical",
     description="One-time backfill 30 hari data historis per coin ke MinIO",
     start_date=datetime(2026, 1, 1),
-    schedule=None,  # WAJIB manual trigger, jangan dijadwalkan
+    schedule=None,  
     catchup=False,
     tags=["backfill", "fase2"],
 ) as dag:

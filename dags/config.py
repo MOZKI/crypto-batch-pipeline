@@ -1,11 +1,10 @@
 """
-Config terpusat untuk pipeline crypto batch.
-Diimport oleh DAG backfill maupun DAG extract harian, biar coin list
-dan setting MinIO gak duplikat di banyak file.
+> Config Source & MinIO < 
+Notes:
+List coin yang diambil dari CoinGecko, dan setting MinIO untuk menyimpan raw data.
 """
 
-# Top 15 coin by market cap (CoinGecko id, bukan symbol)
-# Cara ambil id yang benar: GET /coins/markets, field "id" per coin
+# Top 15 coin by market cap 
 COIN_IDS = [
     "bitcoin",
     "ethereum",
@@ -27,8 +26,6 @@ COIN_IDS = [
 MINIO_CONN_ID = "minio_s3"
 MINIO_BUCKET = "coingecko-raw"
 
-# Prefix path di dalam bucket, dipisah biar backfill (one-time)
-# dan daily extract (recurring) gak nyampur
 BACKFILL_PREFIX = "raw/coingecko/backfill"
 DAILY_PREFIX = "raw/coingecko/daily"
 
