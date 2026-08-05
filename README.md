@@ -1,51 +1,48 @@
 # Crypto Market Monitoring Pipeline
 
-Batch data pipeline end-to-end yang mengumpulkan, membersihkan, dan mentransformasi data pasar cryptocurrency harian dari CoinGecko API, untuk mendukung kebutuhan monitoring pasar sehari-hari.
+An end-to-end batch data pipeline that extracts, cleans, and transforms daily cryptocurrency market data from the CoinGecko API to support market monitoring use cases.
 
-## Latar Belakang & Tujuan
+## Background & Goal
+This project simulates the data needs of an analyst/trading team (hypothetical stakeholder) that requires daily visibility into crypto market movements. The pipeline is built to answer three core business questions:
 
-Project ini dibangun sebagai portfolio data engineering, mensimulasikan kebutuhan monitoring pasar bagi tim analis/trader (stakeholder hipotetis). Pipeline menjawab 3 pertanyaan bisnis utama:
+1. **Which coins moved significantly** (up or down) today? (top gainers/losers)
+2. **Which coins are highly volatile** over a given period? (risk indicator)
+3. **What is the short-to-medium term price trend** for a given coin? (moving average)
 
-1. **Coin mana yang paling naik/turun signifikan** pada suatu hari (top gainers/losers)?
-2. **Coin mana yang volatilitasnya tinggi** dalam periode tertentu (indikator risiko)?
-3. **Bagaimana tren harga** suatu coin dalam 7/30 hari terakhir (moving average)?
+**Scope**: the top 15 coins by market cap. This is a deliberate design decision — sufficient to demonstrate pipeline depth (data quality, incremental loading, transformation logic) without the unnecessary complexity of large-scale data for a portfolio project.
 
-Scope: 15 coin dengan market cap terbesar. Keputusan scope ini disengaja — cukup untuk mendemonstrasikan pipeline logic secara mendalam (data quality, incremental load, transformasi) tanpa kompleksitas data volume besar yang tidak perlu untuk skala portfolio.
+## Architecture
 
-## Arsitektur
-
-Pola: **ELT (Extract - Load - Transform)** dengan medallion architecture (Bronze - Silver - Gold).
-
-<img width="1600" height="900" alt="DIAGRAM" src="https://github.com/user-attachments/assets/ba3b5682-d6e5-4b2e-9983-2fb52f3dfdca" />
-
-Seluruh proses di-orchestrate dan dijadwalkan oleh Airflow (`@daily`), dan seluruh service dijalankan dalam container Docker.
+Pattern: **ELT (Extract - Load - Transform)** using a medallion architecture (Bronze - Silver - Gold).
+<img width="1600" height="900" alt="DIAGRAM" src="https://github.com/user-attachments/assets/0eda309a-4b1d-4132-b3df-18c72a809798" />
+The entire flow is orchestrated and scheduled by Airflow (`@daily`), with every service running in Docker containers.
 
 ## Tech Stack
 
-| Layer | Tools |
+| Layer | Tool |
 |---|---|
-| Containerization | Docker + docker-compose |
+| Containerization | Docker + Docker Compose |
 | Data Lake / Landing Zone | MinIO |
 | Orchestration | Apache Airflow (LocalExecutor) |
 | Data Warehouse | PostgreSQL |
-| Transformation | DBT |
+| Transformation | dbt |
 | Data Quality | Great Expectations |
 | Visualization | Metabase |
-| Version Control | Git/GitHub |
+| Version Control | Git / GitHub |
 | Secrets Management | `.env` (Docker) + Airflow Connections/Variables |
 
-## Struktur Project
+## Project Structure
 
 ```
 crypto-batch-pipeline/
 ├── dags/
-│   ├── config.py                      # daftar coin, konstanta MinIO
-│   ├── alerting.py                    # alerting sederhana on task failure
-│   ├── gx_validation.py               # validasi GX untuk raw data (Bronze)
-│   ├── gx_validation_gold.py          # validasi GX untuk Gold layer
-│   ├── dag_backfill_historical.py     # one-time backfill 30 hari historis
-│   ├── dag_daily_pipeline.py          # extract -> land -> validate -> load Bronze (harian)
-│   └── dag_transform_dbt.py           # dbt run -> dbt test -> validate Gold (harian)
+│   ├── config.py                      # tracked coin list, MinIO constants
+│   ├── alerting.py                    # lightweight on-failure alerting
+│   ├── gx_validation.py               # GX validation for raw data (Bronze)
+│   ├── gx_validation_gold.py          # GX validation for the Gold layer
+│   ├── dag_backfill_historical.py     # one-time backfill of 30 days of history
+│   ├── dag_daily_pipeline.py          # extract -> land -> validate -> load Bronze (daily)
+│   └── dag_transform_dbt.py           # dbt run -> dbt test -> validate Gold (daily)
 ├── dbt/
 │   ├── dbt_project.yml
 │   ├── profiles.yml
@@ -65,85 +62,95 @@ crypto-batch-pipeline/
 │       └── assert_price_not_negative.sql
 ├── sql/
 │   └── create_bronze_tables.sql
+├── docs/
+│   ├── architecture-diagram.png
+│   └── dashboard-screenshot.png
 ├── docker-compose.yml
 ├── .env.example
 ├── .gitignore
 └── README.md
 ```
 
-## Alur Data (Medallion)
+## Data Flow (Medallion Architecture)
 
-- **Bronze**: raw snapshot harian dari CoinGecko, tanpa transformasi. Idempotent lewat `PRIMARY KEY (id, ingestion_date)` + `ON CONFLICT DO UPDATE`.
-- **Silver**: data yang sudah dibersihkan (dedup, rename kolom, type casting, flag `is_supply_unlimited`).
-- **Gold**: metric business-ready — `gold_daily_price_summary`, `gold_moving_average_7d`, `gold_volatility_metric`, `gold_top_gainers_losers`.
+- **Bronze**: raw daily snapshot from CoinGecko, no transformation applied. Idempotent via `PRIMARY KEY (id, ingestion_date)` combined with `ON CONFLICT DO UPDATE`.
+- **Silver**: cleaned data (deduplication, column renaming, type casting, `is_supply_unlimited` flag).
+- **Gold**: business-ready metrics — `gold_daily_price_summary`, `gold_moving_average_7d`, `gold_volatility_metric`, `gold_top_gainers_losers`.
 
-## Cara Menjalankan
+> **Note**: dbt's default custom-schema naming convention concatenates the target schema with the custom schema (e.g. `public_gold`, `public_silver`) rather than using the custom schema name alone. This is reflected in the schema names actually created in Postgres.
 
-### 1. Prasyarat
+## How to Run
+
+### 1. Prerequisites
 - Docker & Docker Compose
-- Python 3 (untuk generate Fernet key)
-- API key CoinGecko (Demo, gratis — daftar di [coingecko.com](https://www.coingecko.com))
+- Python 3 (to generate a Fernet key)
+- A CoinGecko Demo API key (free — sign up at [coingecko.com](https://www.coingecko.com))
 
 ### 2. Setup
 ```bash
-git clone <repo-url>
+git clone https://github.com/MOZKI/crypto-batch-pipeline.git
 cd crypto-batch-pipeline
 cp .env.example .env
 ```
-Isi `.env` dengan value asli, termasuk generate Fernet key:
+Fill in `.env` with real values, including a generated Fernet key:
 ```bash
 python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 
-### 3. Jalankan seluruh service
+### 3. Start all services
 ```bash
 docker compose up -d
 ```
-Tunggu beberapa menit (instalasi `great_expectations`, `dbt-postgres` di dalam container Airflow).
+Allow a few minutes for `great_expectations` and `dbt-postgres` to install inside the Airflow container.
 
-### 4. Setup manual (sekali di awal)
-- Bikin bucket `coingecko-raw` di MinIO Console (`localhost:9001`)
-- Jalankan `sql/create_bronze_tables.sql` lewat DBeaver (`localhost:5433`, database `dwh`)
-- Di Airflow UI (`localhost:8080`):
-  - Set Airflow Variable `COINGECKO_API_KEY` (Admin -> Variables)
-  - Set Airflow Connection `postgres_dwh` (Postgres, host `postgres-dwh`)
-  - Set Airflow Connection `minio_s3` (Amazon Web Services, endpoint `http://minio:9000`)
+### 4. One-time manual setup
+- Create a `coingecko-raw` bucket in the MinIO Console (`localhost:9001`)
+- Run `sql/create_bronze_tables.sql` via DBeaver (`localhost:5433`, database `dwh`)
+- In the Airflow UI (`localhost:8080`):
+  - Set the Airflow Variable `COINGECKO_API_KEY` (Admin -> Variables)
+  - Set the Airflow Connection `postgres_dwh` (Postgres, host `postgres-dwh`)
+  - Set the Airflow Connection `minio_s3` (Amazon Web Services, endpoint `http://minio:9000`)
 
-### 5. Jalankan pipeline
-- Trigger `dag_backfill_historical` sekali (manual) untuk mengisi data historis 30 hari
-- `dag_daily_pipeline` dan `dag_transform_dbt` berjalan otomatis sesuai schedule (`@daily`), atau bisa di-trigger manual untuk testing
+### 5. Run the pipeline
+- Trigger `dag_backfill_historical` once (manually) to populate 30 days of historical data
+- `dag_daily_pipeline` and `dag_transform_dbt` run automatically on schedule (`@daily`), or can be triggered manually for testing
 
-### 6. Akses service
+### 6. Access the services
 | Service | URL |
 |---|---|
 | Airflow | http://localhost:8080 |
 | MinIO Console | http://localhost:9001 |
 | Metabase | http://localhost:3000 |
-| Postgres DWH (DBeaver) | localhost:5433 |
+| Postgres DWH (via DBeaver) | localhost:5433 |
 
 ## Dashboard
 
-Dashboard "Crypto Market Monitoring" di Metabase berisi:
-1. Top 5 Gainers Harian
-2. Top 5 Losers Harian
-3. Price Trend vs Moving Average 7 Hari (interaktif, filter per coin)
-4. Volatility Comparison Antar Coin
-5. Market Cap Ranking Harian
+The "Crypto Market Monitoring Dashboard" in Metabase includes:
+- Price Trend vs 7-Day Moving Average (interactive, filterable by coin)
+- Market Cap Ranking (filterable by date)
+- Top 5 Gainers (daily)
+- Top 5 Losers (daily)
+- Volatility Comparison Across Coins
 
-<img width="652" height="559" alt="Screenshot 2026-08-05 at 21 19 55" src="https://github.com/user-attachments/assets/e787cc67-50fc-4281-b02a-f9d2cd36102c" />
+<p align="center">
+  <img width="652" height="559" alt="Screenshot 2026-08-05 at 21 19 55" src="https://github.com/user-attachments/assets/7b596287-eae5-43b0-b466-6d532a1b0852" />
+</p>
 
+## Key Design Decisions
 
-## Desain Keputusan Penting
+- **ELT, not ETL**: transformation happens inside the warehouse (Postgres) via dbt, leveraging the database's own compute power instead of processing data externally.
+- **Idempotency**: the Bronze layer uses `UPSERT`; the Gold layer is materialized as a `table` (full refresh on every run), making re-runs safe without duplicating data.
+- **Backfill separated from incremental daily load**: the `/coins/{id}/market_chart` endpoint is used for a one-time 30-day historical backfill, while `/coins/markets` is used for the recurring daily snapshot — ensuring moving average and volatility metrics have representative data from day one.
+- **Secrets management**: credentials are accessed via Airflow Connections/Variables or environment variables, never hardcoded and never read via `python-dotenv` inside DAG code (to avoid unnecessary I/O overhead on every scheduler parse cycle).
+- **DAG dependency**: `dag_transform_dbt` waits for `dag_daily_pipeline` to complete via an `ExternalTaskSensor`, ensuring consistent ordering on every scheduled run.
+- **Retry & alerting**: every task has automatic retries (2x, 5-minute delay) and logs a clear alert once retries are exhausted.
 
-- **ELT, bukan ETL**: transformasi dilakukan di dalam warehouse (Postgres) menggunakan DBT, memanfaatkan kekuatan komputasi database.
-- **Idempotency**: Bronze layer menggunakan `UPSERT`; Gold layer di-materialize sebagai `table` (full refresh tiap run), sehingga aman di-run ulang tanpa duplikasi data.
-- **Backfill terpisah dari incremental daily load**: endpoint `/coins/{id}/market_chart` untuk histori 30 hari (one-time), endpoint `/coins/markets` untuk snapshot harian (recurring) — memastikan moving average dan volatility punya data representatif sejak awal.
-- **Secrets management**: kredensial diakses lewat Airflow Connections/Variables atau environment variable, bukan hardcode maupun `python-dotenv` di dalam kode DAG (menghindari overhead re-parsing scheduler).
-- **DAG dependency**: `dag_transform_dbt` menunggu `dag_daily_pipeline` selesai lewat `ExternalTaskSensor`, memastikan urutan proses yang konsisten pada setiap scheduled run.
-- **Retry & alerting**: setiap task punya retry otomatis (2x, jeda 5 menit) dan alert log ketika gagal setelah retry habis.
+## Limitations & Future Work
 
-## Batasan & Pengembangan Selanjutnya
+- Current scope: 15 coins (extendable via `COIN_IDS` in `config.py`)
+- Development environment: local Docker Compose (the scheduler must be running for automated runs to trigger)
+- Stretch goals: migrate the Gold layer to BigQuery, deploy to a cloud VM for 24/7 scheduling, add lightweight CI/CD for `dbt test`
 
-- Scope saat ini: 15 coin (dapat di-extend lewat `COIN_IDS` di `config.py`)
-- Development environment: local Docker Compose (scheduler perlu aktif untuk automated run)
-- Stretch goal: migrasi Gold layer ke BigQuery, deployment ke Cloud VM untuk scheduling 24/7, CI/CD sederhana untuk `dbt test`
+## Author
+
+Mohammad Zaki Iskandar — Information Systems & Technology student at Universitas Negeri Jakarta, Data Engineering Bootcamp participant at Dibimbing.id.
