@@ -16,16 +16,7 @@ Scope: 15 coin dengan market cap terbesar. Keputusan scope ini disengaja — cuk
 
 Pola: **ELT (Extract - Load - Transform)** dengan medallion architecture (Bronze - Silver - Gold).
 
-```
-CoinGecko API
-  -> EXTRACT (Airflow hit API)
-  -> LAND (raw data JSON ke MinIO, partisi by date)
-  -> VALIDATE (Great Expectations: schema, null check, tipe data)
-  -> LOAD (raw data ke Postgres Bronze, as-is)
-  -> TRANSFORM (DBT: Bronze -> Silver -> Gold)
-  -> VALIDATE (Great Expectations: business logic di Gold layer)
-  -> VISUALIZE (Metabase, dashboard interaktif)
-```
+<img width="1600" height="900" alt="DIAGRAM" src="https://github.com/user-attachments/assets/ba3b5682-d6e5-4b2e-9983-2fb52f3dfdca" />
 
 Seluruh proses di-orchestrate dan dijadwalkan oleh Airflow (`@daily`), dan seluruh service dijalankan dalam container Docker.
 
@@ -139,7 +130,8 @@ Dashboard "Crypto Market Monitoring" di Metabase berisi:
 4. Volatility Comparison Antar Coin
 5. Market Cap Ranking Harian
 
-*(Screenshot dashboard: lihat `docs/dashboard-screenshot.png`)*
+<img width="652" height="559" alt="Screenshot 2026-08-05 at 21 19 55" src="https://github.com/user-attachments/assets/e787cc67-50fc-4281-b02a-f9d2cd36102c" />
+
 
 ## Desain Keputusan Penting
 
