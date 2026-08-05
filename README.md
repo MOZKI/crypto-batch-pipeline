@@ -1,6 +1,25 @@
 # Crypto Market Monitoring Pipeline
 
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Apache Airflow](https://img.shields.io/badge/Apache%20Airflow-017CEE?style=for-the-badge&logo=Apache%20Airflow&logoColor=white)](https://airflow.apache.org/)
+[![dbt](https://img.shields.io/badge/dbt-FF694B?style=for-the-badge&logo=dbt&logoColor=white)](https://www.getdbt.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![MinIO](https://img.shields.io/badge/MinIO-C72C48?style=for-the-badge&logo=minio&logoColor=white)](https://min.io/)
+[![Metabase](https://img.shields.io/badge/Metabase-506477?style=for-the-badge&logo=metabase&logoColor=white)](https://www.metabase.com/)
+
 An end-to-end batch data pipeline that extracts, cleans, and transforms daily cryptocurrency market data from the CoinGecko API to support market monitoring use cases.
+
+## Table of Contents
+- [Background & Goal](#background--goal)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Data Flow (Medallion Architecture)](#data-flow-medallion-architecture)
+- [How to Run](#how-to-run)
+- [Dashboard](#dashboard)
+- [Key Design Decisions](#key-design-decisions)
+- [Limitations & Future Work](#limitations--future-work)
+- [Author](#author)
 
 ## Background & Goal
 This project simulates the data needs of an analyst/trading team (hypothetical stakeholder) that requires daily visibility into crypto market movements. The pipeline is built to answer three core business questions:
@@ -14,7 +33,11 @@ This project simulates the data needs of an analyst/trading team (hypothetical s
 ## Architecture
 
 Pattern: **ELT (Extract - Load - Transform)** using a medallion architecture (Bronze - Silver - Gold).
-<img width="1600" height="900" alt="DIAGRAM" src="https://github.com/user-attachments/assets/0eda309a-4b1d-4132-b3df-18c72a809798" />
+
+<p align="center">
+  <img width="1600" height="900" alt="Architecture Diagram" src="https://github.com/user-attachments/assets/0eda309a-4b1d-4132-b3df-18c72a809798" />
+</p>
+
 The entire flow is orchestrated and scheduled by Airflow (`@daily`), with every service running in Docker containers.
 
 ## Tech Stack
@@ -133,7 +156,7 @@ The "Crypto Market Monitoring Dashboard" in Metabase includes:
 - Volatility Comparison Across Coins
 
 <p align="center">
-  <img width="652" height="559" alt="Screenshot 2026-08-05 at 21 19 55" src="https://github.com/user-attachments/assets/7b596287-eae5-43b0-b466-6d532a1b0852" />
+  <img width="652" height="559" alt="Dashboard Screenshot" src="https://github.com/user-attachments/assets/7b596287-eae5-43b0-b466-6d532a1b0852" />
 </p>
 
 ## Key Design Decisions
@@ -153,4 +176,8 @@ The "Crypto Market Monitoring Dashboard" in Metabase includes:
 
 ## Author
 
-Mohammad Zaki Iskandar — Information Systems & Technology student at Universitas Negeri Jakarta.
+**Mohammad Zaki Iskandar**
+Information Systems & Technology student at Universitas Negeri Jakarta.
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mzakiisk/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/MOZKI)
