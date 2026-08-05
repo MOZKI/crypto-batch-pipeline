@@ -153,4 +153,4 @@ The "Crypto Market Monitoring Dashboard" in Metabase includes:
 
 ## Author
 
-Mohammad Zaki Iskandar — Information Systems & Technology student at Universitas Negeri Jakarta, Data Engineering Bootcamp participant at Dibimbing.id.
+Mohammad Zaki Iskandar — Information Systems & Technology student at Universitas Negeri Jakarta.
